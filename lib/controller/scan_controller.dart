@@ -1,12 +1,10 @@
 import 'dart:developer';
-
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:pytorch_lite/pytorch_lite.dart';
-
 import 'camera_view_singleton.dart';
 
 class ScanController extends GetxController{

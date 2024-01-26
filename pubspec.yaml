@@ -39,12 +39,8 @@ dependencies:
   path_provider: ^2.1.2
   path: ^1.8.3
   get: ^4.6.6
-  permission_handler: ^11.2.0
   image: ^4.1.4
-#  tflite_flutter: ^0.10.4
-  tensorflow_lite_flutter: ^2.0.1
   pytorch_lite: ^4.2.4
-#  tflite_v2: ^1.0.0
 
 dev_dependencies:
   flutter_test:
