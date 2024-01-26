@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/router.dart';
-import 'package:frontend/pages/homepage/homepage.dart';
+import 'package:frontend/pages/tabs.dart';
+import 'package:get/get.dart';
+import 'controller/scan_controller.dart';
 
 void main() {
+  Get.put(ScanController());
   runApp(const MyApp());
 }
 
@@ -17,10 +19,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      initialRoute: MyRouter.home,
-      routes: {
-        MyRouter.home: (context) => const MyHomePage(title: 'Flutter Demo Home Page'), // 修改的地方
-      },
+      home: const Tabs(),
     );
   }
 }
+
+
