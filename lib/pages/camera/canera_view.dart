@@ -1,48 +1,40 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:frontend/controller/scan_controller.dart';
 import 'package:get/get.dart';
-import 'package:get/get_state_manager/src/simple/get_state.dart';
+import '../../controller/box_widget_file.dart';
+import '../../controller/scan_controller.dart';
+
 
 class CameraView extends StatelessWidget {
   const CameraView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final ScanController controller = Get.find<ScanController>();
+
+    // 在构建 CameraPreview 前，检查控制器是否已初始化且未被销毁
+    if (!controller.isCameraInitialized.value) {
+      return const Center(child: Text("Loading Preview..."));
+    }
+
+    return GetBuilder<ScanController>(
+      builder: (_) => _buildCameraPreview(controller),
+    );
+  }
+
+  Widget _buildCameraPreview(ScanController controller) {
+    // 构建 CameraPreview
     return Scaffold(
-      body: GetBuilder<ScanController>(
-        init: ScanController(),
-        builder: (controller) {
-          return controller.isCameraInitialized.value
-              ? Stack(
-                children: [
-                  CameraPreview(controller.cameraController),
-                  Positioned(
-                    top: 100,
-                    right: 100,
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red, width: 4.0),
-                      ),
-                      child:  Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            color: Colors.white,
-                            child: Text(controller.label)
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                ],
-              )
-              : const Center(child: Text("Loding Preview..."),);
-        }
+      body: SafeArea(
+        child: Stack(
+          children: [
+            CameraPreview(controller.cameraController),
+            ...controller.detections.map((detection) =>
+                BoxWidget(result: detection)).toList(),
+          ],
+        ),
       ),
     );
   }
 }
+

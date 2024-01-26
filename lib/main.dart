@@ -4,7 +4,10 @@ import 'package:frontend/pages/homepage/homepage.dart';
 import 'package:frontend/pages/tabs.dart';
 import 'package:get/get.dart';
 
+import 'controller/scan_controller.dart';
+
 void main() {
+  Get.put(ScanController());
   runApp(const MyApp());
 }
 

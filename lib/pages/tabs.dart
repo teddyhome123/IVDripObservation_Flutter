@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/pages/homepage/homepage.dart';
-import 'package:frontend/pages/camera/camera.dart';
 import 'package:camera/camera.dart';
+import 'package:get/get.dart';
 
+import '../controller/scan_controller.dart';
 import 'camera/canera_view.dart';
 
 class Tabs extends StatefulWidget {
@@ -13,6 +14,7 @@ class Tabs extends StatefulWidget {
 }
 
 class _TabsState extends State<Tabs> {
+  final ScanController controller = Get.find<ScanController>();
   int _currentIndex = 0;
 
   List<CameraDescription>? _cameras;
@@ -30,7 +32,6 @@ class _TabsState extends State<Tabs> {
       _pages = [
         const HomePage(),
         const CameraView(),
-        // CameraPage(cameras: _cameras!),
       ];
     });
   }
@@ -47,9 +48,21 @@ class _TabsState extends State<Tabs> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          if (index == 1) {
+            controller.initCamera(context);
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CameraView()),
+            );
+          } else {
+            setState(() {
+              _currentIndex = index;
+              if (index != 1) {
+                controller.stopCamera();
+              }
+            });
+          }
         },
         items: const [
           BottomNavigationBarItem(

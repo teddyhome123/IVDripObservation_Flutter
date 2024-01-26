@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
-import 'package:frontend/pages/camera/camera.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

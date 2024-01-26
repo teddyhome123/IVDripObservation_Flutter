@@ -1,17 +1,19 @@
 import 'dart:developer';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:permission_handler/permission_handler.dart';
-// import 'package:tflite_v2/tflite_v2.dart';
-import 'package:tflite_flutter/tflite_flutter.dart';
+import 'package:pytorch_lite/pytorch_lite.dart';
+
+import 'camera_view_singleton.dart';
 
 class ScanController extends GetxController{
   @override
   void onInit() {
     super.onInit();
-    initCamera();
-    initTflite();
+    initPytorch();
   }
 
   @override
@@ -23,75 +25,101 @@ class ScanController extends GetxController{
   late CameraController cameraController;
   late List<CameraDescription> camera;
 
+  RxList<ResultObjectDetection> detections = RxList<ResultObjectDetection>();
   var isCameraInitialized = false.obs;
   var cameraCount = 0;
+  bool isProcessingImage = false;
 
-  var x, y, w, h = 0.0;
-  var label = "";
-
-  initCamera() async{
-    // if(await Permission.camera.request().isGranted){
+  initCamera(BuildContext context) async {
       camera = await availableCameras();
-      cameraController = CameraController(camera[0], ResolutionPreset.max);
-      await cameraController.initialize().then((value) {
-          cameraController.startImageStream((image) {
-            cameraCount++;
-            if(cameraCount %10 == 0) {
-              cameraCount = 0;
-              objectDetector(image);
-            }
-            update();
-          } );
+      cameraController = CameraController(camera[0], ResolutionPreset.high);
+      await cameraController.initialize().then((_) {
+        Size? previewSize = cameraController?.value.previewSize;
+
+        CameraViewSingleton.inputImageSize = previewSize!;
+
+        Size screenSize = MediaQuery.of(context).size;
+        CameraViewSingleton.screenSize = screenSize;
+        CameraViewSingleton.ratio = screenSize.width / previewSize.height;
       });
+
+      cameraController.startImageStream((image) async {
+        if (!isProcessingImage) {
+          isProcessingImage = true;
+          await objectDetector(image);
+          isProcessingImage = false;
+        }
+      });
+
       isCameraInitialized(true);
       update();
-    // } else {
-    //   print("permission denied");
-    // }
 
   }
 
-  initTflite() async{
-    await Tflite.loadModel(
-      model: "assets/models/model.tflite",
-      labels:"assets/models/labels.txt",
-      isAsset: true,
-      numThreads: 1,
-      useGpuDelegate: false,
-    );
 
+
+  Future<void> stopCamera() async {
+    if (cameraController.value.isInitialized) {
+      await cameraController.stopImageStream();
+      await cameraController.dispose(); // 可以选择性地调用
+    }
   }
 
-  objectDetector(CameraImage image) async{
-    var detector = await Tflite.runModelOnFrame(
-        bytesList: image.planes.map((e) {
-      return e.bytes;
-    }).toList(),
-    asynch: true,
-      imageHeight: image.height,
-      imageWidth: image.width,
-      imageMean: 127.5,
-      imageStd: 127.5,
-      numResults: 1,
-      rotation: 90,
-      threshold: 0.4,
-    );
+  ModelObjectDetection? _objectModel;
+  ClassificationModel? _imageModel;
 
-    if(detector != null) {
-      var ourDetectedObject = detector.first;
-      // if(ourDetectedObject['confidenceInClass'] * 100 > 45){
-      //   label = ourDetectedObject['detectedClass'].toString();
-      //   h = ourDetectedObject['rect']['h'];
-      //   w = ourDetectedObject['rect']['w'];
-      //   x = ourDetectedObject['rect']['x'];
-      //   y = ourDetectedObject['rect']['y'];
-      // }
-      if(ourDetectedObject['confidence']*100>45) {
-        label=ourDetectedObject ['label'].toString();
-        print(label);
+  initPytorch() async{
+      // String pathImageModel = "assets/models/model_classification.pt";
+      //String pathCustomModel = "assets/models/custom_model.ptl";
+      String pathObjectDetectionModel = "assets/models/best.torchscript";
+      try {
+        // _imageModel = await PytorchLite.loadClassificationModel(
+        //     pathImageModel, 224, 224, 1000,
+        //     labelPath: "assets/labels/label_classification_imageNet.txt");
+        //_customModel = await PytorchLite.loadCustomModel(pathCustomModel);
+        _objectModel = await PytorchLite.loadObjectDetectionModel(
+            pathObjectDetectionModel, 1, 640, 640,
+            labelPath: "assets/models/labels.txt",
+            objectDetectionModelType: ObjectDetectionModelType.yolov8);
+      } catch (e) {
+        if (e is PlatformException) {
+          print("only supported for android, Error is $e");
+        } else {
+          print("Error is $e");
+        }
       }
-      update();
-      // log("Result is $detector");
+
+
+  }
+
+  objectDetector(CameraImage image) async {
+    if (_objectModel != null) {
+      try {
+        Stopwatch stopwatch = Stopwatch()..start();
+        List<ResultObjectDetection> newDetections = await _objectModel!.getCameraImagePrediction(
+          image,
+          0,
+          minimumScore: 0.3,
+          iOUThreshold: 0.3,
+        );
+
+        for (var detection in newDetections) {
+          print("Object: ${detection.className}, Rect: left=${detection.rect.left}, top=${detection.rect.top}, width=${detection.rect.width}, height=${detection.rect.height}");
+        }
+
+        // 使用 assignAll 来更新 RxList
+        detections.assignAll(newDetections);
+
+        if (newDetections.isNotEmpty) {
+          log("Detection took: ${stopwatch.elapsedMilliseconds}ms");
+          log("Detected objects: $newDetections");
+        }
+      } catch (e) {
+        log("Error during object detection: $e");
+      } finally {
+        update(); // 只在需要时更新 UI
+      }
     }
   }
 }
+
