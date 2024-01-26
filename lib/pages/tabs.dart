@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/pages/homepage/homepage.dart';
-import 'package:camera/camera.dart';
 import 'package:get/get.dart';
 
 import '../controller/scan_controller.dart';
@@ -17,7 +16,6 @@ class _TabsState extends State<Tabs> {
   final ScanController controller = Get.find<ScanController>();
   int _currentIndex = 0;
 
-  List<CameraDescription>? _cameras;
   List<Widget>? _pages;
 
   @override

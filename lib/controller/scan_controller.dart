@@ -32,7 +32,7 @@ class ScanController extends GetxController{
       camera = await availableCameras();
       cameraController = CameraController(camera[0], ResolutionPreset.high);
       await cameraController.initialize().then((_) {
-        Size? previewSize = cameraController?.value.previewSize;
+        Size? previewSize = cameraController.value.previewSize;
 
         CameraViewSingleton.inputImageSize = previewSize!;
 
@@ -64,7 +64,6 @@ class ScanController extends GetxController{
   }
 
   ModelObjectDetection? _objectModel;
-  ClassificationModel? _imageModel;
 
   initPytorch() async{
       // String pathImageModel = "assets/models/model_classification.pt";
@@ -81,9 +80,9 @@ class ScanController extends GetxController{
             objectDetectionModelType: ObjectDetectionModelType.yolov8);
       } catch (e) {
         if (e is PlatformException) {
-          print("only supported for android, Error is $e");
+          log("only supported for android, Error is $e");
         } else {
-          print("Error is $e");
+          log("Error is $e");
         }
       }
 
@@ -101,9 +100,9 @@ class ScanController extends GetxController{
           iOUThreshold: 0.3,
         );
 
-        for (var detection in newDetections) {
-          print("Object: ${detection.className}, Rect: left=${detection.rect.left}, top=${detection.rect.top}, width=${detection.rect.width}, height=${detection.rect.height}");
-        }
+        // for (var detection in newDetections) {
+        //   print("Object: ${detection.className}, Rect: left=${detection.rect.left}, top=${detection.rect.top}, width=${detection.rect.width}, height=${detection.rect.height}");
+        // }
 
         // 使用 assignAll 来更新 RxList
         detections.assignAll(newDetections);

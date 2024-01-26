@@ -5,10 +5,10 @@ import 'camera_view_singleton.dart';
 
 
   class BoxWidget extends StatelessWidget {
-    ResultObjectDetection result;
-    Color? boxesColor;
-    bool showPercentage;
-    BoxWidget(
+    final ResultObjectDetection result;
+    final Color? boxesColor;
+    final bool showPercentage;
+    const BoxWidget(
         {Key? key,
           required this.result,
           this.boxesColor,
@@ -20,7 +20,7 @@ import 'camera_view_singleton.dart';
 
       Size screenSize = CameraViewSingleton.actualPreviewSizeH;
 
-      print(screenSize);
+      // print(screenSize);
       double factorX = screenSize.width;
       double factorY = screenSize.height ;
       if (boxesColor == null) {
@@ -54,11 +54,9 @@ import 'camera_view_singleton.dart';
               alignment: Alignment.centerRight,
               color: usedColor,
               child: Text(
-                (result.className ?? result.classIndex.toString()) +
-                    "_" +
-                    (showPercentage
-                        ? (result.score * 100).toStringAsFixed(2) + "%"
-                        : ""),
+                "${result.className ?? result.classIndex.toString()}_${showPercentage
+                        ? "${(result.score * 100).toStringAsFixed(2)}%"
+                        : ""}",
               ),
             ),
             Container(
@@ -66,7 +64,7 @@ import 'camera_view_singleton.dart';
               height: result.rect.height.toDouble() * factorY,
               decoration: BoxDecoration(
                   border: Border.all(color: usedColor!, width: 3),
-                  borderRadius: BorderRadius.all(Radius.circular(2))),
+                  borderRadius: const BorderRadius.all(Radius.circular(2))),
               child: Container(),
             ),
           ],
